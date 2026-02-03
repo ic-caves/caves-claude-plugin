@@ -40,7 +40,44 @@ When sharing caves with users, provide the URL-encoded link for direct navigatio
   - Author's full name (for bidirectional connection)
 - Confirm extracted metadata with user if uncertain
 
-### 2. Create New Perspective
+### 2. Check for Existing Cookbook
+
+**CRITICAL: Always check if this cookbook already exists before creating a new perspective.**
+
+**Search process:**
+
+1. **Search for the book title**: `caves__search_caves(query="[book title]")`
+   - Look for exact or close matches to the book title
+   - Example: Search for "salt fat acid heat"
+
+2. **Check subcaves of "cookbooks"**: `caves__get_subcaves(parentCave="cookbooks")`
+   - This shows all cookbooks currently in the system
+   - Look for the book title in the caves list
+
+3. **If a match is found**:
+   - Check if it's a perspective: Look for a PID in the subcaves
+   - Verify it's the same book by checking the author connection
+   - Get the perspective details: `caves__my_shadow_caves(pId="found-pid", format="md")`
+   - **Present findings to the user**:
+     - "I found an existing cookbook perspective for '[book title]' by [author]"
+     - "It already has [X] index entries"
+     - "Would you like to: (a) Use this existing perspective and add to it, (b) Create a new separate perspective with a different title?"
+
+4. **If no match is found**:
+   - Confirm with user: "I didn't find '[book title]' in the system. Proceeding to create new perspective."
+
+5. **If creating a new perspective when similar one exists**:
+   - Suggest adding a distinguishing suffix
+   - Example: "salt fat acid heat (2nd edition)" or "salt fat acid heat (personal copy)"
+   - This prevents confusion when multiple versions exist
+
+**Why this matters:**
+- Prevents duplicate cookbooks in the system
+- Avoids confusion for users who already added this book
+- Allows adding to existing incomplete indexes
+- Maintains data consistency across the Caves ecosystem
+
+### 3. Create New Perspective
 - Create a new Caves perspective using `caves__createPerspective` with book title as username
 - Store the returned pId for all subsequent connections
 - Create bidirectional connection between book title and author: `book title ← author` AND `book title → author`
@@ -50,12 +87,12 @@ When sharing caves with users, provide the URL-encoded link for direct navigatio
   - `cookbooks ← {book title}` (places this book in cookbooks)
   - `indexes ← {book title}` (marks this book as having an index)
 
-### 3. Process Index Images
+### 4. Process Index Images
 - Convert HEIC images to JPEG if needed
 - Resize large images for readability: `sips -Z 1200 image.jpg`
 - Transcribe each index page from the images
 
-### 4. Create Index Connections
+### 5. Create Index Connections
 - Check existing connections with `caves__my_shadow_caves` to avoid duplicates
 - Process all index entries in large batches (API handles 50-100+ connections well)
 - Maintain all hierarchical relationships from the index (ingredients → recipes)
@@ -242,11 +279,45 @@ caves__connect_caves(
 )
 ```
 
+### Adding to an Existing Cookbook
+
+If the cookbook already exists in Caves (found during Step 2 check):
+
+```python
+# Use the existing perspective PID (from search results)
+existingPId = "0x6aFf..."  # Found from caves__get_subcaves(parentCave="cookbooks")
+
+# Check what's already there
+caves__my_shadow_caves(pId=existingPId, format="md")
+# Review existing entries to avoid duplicates
+
+# Add new index entries to the existing perspective
+caves__connect_caves(
+    pId=existingPId,  # Use existing PID, not a new one
+    connections=[
+        # Add new recipe entries that don't exist yet
+        {"parent": "salt fat acid heat", "child": "new recipe name", "value": True},
+        {"parent": "new recipe name", "child": "145", "value": True},
+
+        # ... more new entries
+    ]
+)
+```
+
+**Important when adding to existing:**
+- Always check existing connections first with `caves__my_shadow_caves` to avoid duplicates
+- Don't recreate the author connection or taxonomy connections (they already exist)
+- Only add new index entries that aren't already present
+- Use the same lowercase formatting and structure as existing entries
+
 ## Quality Checklist
 
 Before creating connections:
 - [ ] Extracted book title and author name from cover image
 - [ ] Confirmed metadata accuracy with user if uncertain
+- [ ] **CHECKED if cookbook already exists in Caves** (searched book title, checked cookbooks subcaves)
+- [ ] If existing cookbook found, consulted user about using existing vs creating new
+- [ ] If creating new when similar exists, added distinguishing suffix to title
 - [ ] Created new perspective with book title using `caves__createPerspective`
 - [ ] Stored pId from perspective creation
 - [ ] Created bidirectional connection: book title ↔ author as first connections
