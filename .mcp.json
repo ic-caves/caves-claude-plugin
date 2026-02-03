@@ -1,0 +1,9 @@
+{
+  "caves-mcp": {
+    "command": "npx",
+    "args": [
+      "mcp-remote",
+      "https://oracle.itscaves.com/sse"
+    ]
+  }
+}

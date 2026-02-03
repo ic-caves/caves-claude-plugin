@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Environment
+.env
+
+# Node modules (if you add any scripts)
+node_modules/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Editor directories
+.vscode/
+.idea/
