@@ -81,7 +81,7 @@ When sharing caves with users, provide the URL-encoded link for direct navigatio
 - Create a new Caves perspective using `caves__createPerspective` with book title as username
 - Store the returned pId for all subsequent connections
 - Create bidirectional connection between book title and author: `book title ← author` AND `book title → author`
-- Connect the pId to both title and author as parents: `{book title} ← {pId}` AND `{author} ← {pId}`
+- Connect the pId to title, author, and thing as parents: `{book title} ← {pId}`, `{author} ← {pId}`, AND `thing ← {pId}`
 - Create standard taxonomy connections:
   - `books ← cookbooks` (establishes cookbooks category)
   - `cookbooks ← {book title}` (places this book in cookbooks)
@@ -254,9 +254,10 @@ caves__connect_caves(
         {"parent": "salt fat acid heat", "child": "samin nosrat", "value": True},
         {"parent": "samin nosrat", "child": "salt fat acid heat", "value": True},
 
-        # Connect pId as child of both title and author
+        # Connect pId as child of title, author, and thing
         {"parent": "salt fat acid heat", "child": "abc123...", "value": True},
         {"parent": "samin nosrat", "child": "abc123...", "value": True},
+        {"parent": "thing", "child": "abc123...", "value": True},
 
         # Standard taxonomy connections
         {"parent": "books", "child": "cookbooks", "value": True},
@@ -321,7 +322,7 @@ Before creating connections:
 - [ ] Created new perspective with book title using `caves__createPerspective`
 - [ ] Stored pId from perspective creation
 - [ ] Created bidirectional connection: book title ↔ author as first connections
-- [ ] Connected pId as child of both title and author: {title} ← {pId}, {author} ← {pId}
+- [ ] Connected pId as child of title, author, and thing: {title} ← {pId}, {author} ← {pId}, thing ← {pId}
 - [ ] Created standard taxonomy connections: books ← cookbooks, cookbooks ← {book title}, indexes ← {book title}
 - [ ] Checked for existing connections with `caves__my_shadow_caves` to avoid duplicates
 - [ ] All text lowercased
