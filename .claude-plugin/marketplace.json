@@ -15,7 +15,7 @@
         "name": "Caves Team",
         "email": "support@itscaves.com"
       },
-      "source": ".",
+      "source": "./",
       "category": "productivity",
       "homepage": "https://itscaves.com"
     }
