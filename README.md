@@ -64,6 +64,15 @@ You should see your perspectives listed.
 
 ## Skills Included
 
+### caves-knowledge
+Knowledge center for Caves - answers questions by searching documentation, blog, and the Caves system.
+
+**Usage:**
+- Ask questions about Caves concepts: "What is fire in Caves?"
+- Get feature explanations: "How do perspectives work?"
+- Find documentation: "How do I add content?"
+- The skill searches local docs, the blog, and can use MCP tools for live examples
+
 ### cookbook-index-to-caves
 Automatically converts cookbook index pages to Caves knowledge graph connections.
 
