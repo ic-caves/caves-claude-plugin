@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "ic-caves-caves-claude-plugin",
+  "name": "ic-caves",
   "description": "Caves knowledge graph integration for Claude Code with MCP tools and skills",
   "owner": {
     "name": "Caves Team",
