@@ -56,6 +56,7 @@ Follow these steps to execute the 4-phase analysis:
    - File path: Use Read tool to load the file
    - Direct paste: User provides text directly in chat
    - URL: Guide user to use WebFetch first to extract content, then provide the text
+   - Caves IPFS: Content retrieved from Caves using caves__read_ipfs tool
 
 2. Validate content length:
    - Minimum: ~500 words (too short won't yield good results)
@@ -63,17 +64,27 @@ Follow these steps to execute the 4-phase analysis:
    - Sweet spot: 2,000-20,000 words
 
 3. Optional IPFS upload:
+   - **SKIP this step if content was retrieved from Caves** (via caves__read_ipfs or similar - it's already uploaded!)
+   - **Only ask** if content came from file path, direct paste, or URL
    - Ask: "Would you like to upload this to IPFS for permanent storage?"
    - If yes: Note for Step 10 (execute after creating connections)
    - Benefits: Content becomes permanent part of knowledge graph
 
-**Example**:
+**Example (when content came from file/paste/URL)**:
 ```
 Claude: "I'll analyze this content for your Caves knowledge graph.
         I see you have a 5,000-word transcript.
 
         Would you like to upload this to IPFS for permanent storage?
         This makes it a permanent part of your knowledge graph."
+```
+
+**Example (when content came from Caves IPFS)**:
+```
+Claude: "I'll analyze this content for your Caves knowledge graph.
+        I see you have a 5,000-word article (already stored in IPFS)."
+
+        [Skip IPFS upload question - content is already uploaded]
 ```
 
 ### Step 2: Execution Mode Selection
@@ -105,68 +116,69 @@ Claude: "How would you like to proceed?
         Note: Analysis may take 2-3 minutes for this content length."
 ```
 
-### Step 3: Perspective Auto-Matching
+### Step 3: Resolve or Create Perspective
 
 **Objective**: Determine which perspective (pId) to use for these connections.
 
-**Detailed Instructions**:
+**Use the `perspective-resolver` skill to handle perspective management.**
 
-1. **Fetch existing perspectives**:
-   ```
-   Call: caves__my_shadows()
-   ```
+This perspective represents the content/article itself. The pId should be a child of key identifiers like author name and/or source URL.
 
-2. **Extract speaker/author from content**:
-   - Analyze first 2,000 characters carefully
-   - Look for attribution patterns:
+#### Extract Identifying Information
+
+1. **Analyze first 2,000 characters** to identify:
+   - **Author/speaker name**: Look for attribution patterns
      - "by [name]", "- [name]", "written by [name]"
      - Self-references: "I am [name]", "my name is [name]"
      - Interview format: "Interviewer: ... Guest: [name]"
-   - Analyze writing style and first-person references
-   - Extract likely speaker name (convert to lowercase for username)
+   - **Source URL**: If content has a canonical source URL
+   - Convert names to lowercase for tagging
 
-3. **Score each existing perspective** (0-10 scale):
-   - **Username match**:
-     - Exact match: +5 points
-     - Partial match (contains or contained by): +3 points
-     - Similar (edit distance < 3): +2 points
-   - **Description relevance**:
-     - Topics/themes match content: +3 points
-     - Related domain: +2 points
-     - Unrelated: 0 points
-   - **Recent activity**:
-     - Used recently for similar content: +2 points
+2. **Determine identifying tags** (choose appropriate combination):
+   - **With author + URL**: `[author_name, source_url]`
+   - **With just author**: `[author_name]`
+   - **With just URL**: `[source_url]`
+   - Use the most specific combination available
 
-4. **Make decision**:
-   - **If best score ≥ 7**: Recommend reusing that perspective
-   - **If best score < 7**: Recommend creating new perspective
+#### Invoke perspective-resolver Skill
 
-5. **Present recommendation to user**:
-   ```
-   Claude: "I analyzed the content and identified the speaker as '[name]'.
-
-           I recommend [creating a new perspective / reusing '[username]' perspective]:
-
-           [Explain reasoning based on scoring]
-
-           Does this sound right?"
-   ```
-
-6. **Execute decision**:
-   - If creating new: `caves__createPerspective(username=speaker_name)`
-   - Store the pId for subsequent steps
-
-**Example**:
+**Example with author and URL:**
+```javascript
+// Invoke: perspective-resolver skill
+{
+  primary_tag: author_name,  // e.g., "david graeber"
+  identifying_tags: [author_name, source_url],  // e.g., ["david graeber", "https://theanarchistlibrary.org/article"]
+  taxonomy: [
+    {parent: "articles", child: source_url},
+    {parent: "thing", child: "{pId}"}
+  ],
+  entity_type: "article",
+  entity_description: `article by ${author_name}`
+}
 ```
-Claude: "I analyzed the content and identified the speaker as 'david graeber'.
 
-        I recommend creating a new perspective for 'david graeber' because:
-        - Your existing perspectives don't have similar usernames
-        - This content discusses anarchist anthropology, which is distinct
-          from your current topics
-
-        Does this sound right?"
+**Example with just author (no URL):**
+```javascript
+// Invoke: perspective-resolver skill
+{
+  primary_tag: author_name,  // e.g., "david graeber"
+  identifying_tags: [author_name],
+  taxonomy: [
+    {parent: "thing", child: "{pId}"}
+  ],
+  entity_type: "content",
+  entity_description: `content by ${author_name}`
+}
 ```
+
+The perspective-resolver skill will:
+- Search for existing perspectives using the identifying tags
+- Present findings to user if matching perspective exists
+- Handle user choice (reuse existing vs create new)
+- Create all initial connections (identifying tags, taxonomy)
+- Return the pId to use
+
+**Store the returned pId** for subsequent analysis phases (Step 4 onwards).
 
 ### Step 4: Phase 1 - Extract Connections
 
@@ -558,7 +570,9 @@ Top Connections (showing 15 of 127):
    - Efficient even for 100+ connections
    - Returns count of new vs existing connections
 
-3. **Optional: IPFS Upload** (if requested in Step 1):
+3. **Optional: IPFS Upload** (if requested in Step 1 AND content not already from Caves):
+
+   **IMPORTANT**: Skip this entire step if content was retrieved from Caves (e.g., via caves__read_ipfs) - it's already uploaded!
 
    a. Upload content:
       ```
@@ -778,22 +792,16 @@ Top Connections (showing 15 of 127):
 - **Cause**: Content lacks clear attribution
 - **Solution**:
   - Ask user: "Who is the author/speaker?"
-  - Use generic perspective: "imported_content_[date]"
-  - Create topic-based perspective: "[topic]_collection"
-
-**Problem**: Multiple potential perspectives match well
-- **Cause**: Ambiguous or multi-author content
-- **Solution**:
-  - Present top 2-3 options to user
-  - Let user choose
-  - Document choice for future reference
+  - Use generic username: "imported_content_[date]"
+  - Or create topic-based username: "[topic]_collection"
+  - Invoke perspective-resolver skill with the chosen identifier
 
 **Problem**: Perspective creation fails
 - **Cause**: Username already taken or invalid format
-- **Solution**:
-  - Try variations: "author_name_2", "author_name_import"
-  - Ask user for alternative username
-  - Fallback to existing perspective selection
+- **Solution**: The perspective-resolver skill handles this automatically by:
+  - Suggesting alternative usernames
+  - Offering to use existing perspective
+  - Getting user input for resolution
 
 ### Performance Issues
 
@@ -859,7 +867,7 @@ This skill can work with other Caves skills:
 **Process**:
 1. Content acquisition: Read from file
 2. Execution mode: Analyze-only (first use)
-3. Perspective: Auto-matched to "david_graeber" (speaker identified)
+3. Perspective: Used perspective-resolver skill → found existing "david graeber" perspective
 4. Phase 1: Extracted 42 connections (theories, concepts, examples)
 5. Phase 2: Found 18 related entities, created 12 bridges
 6. Phase 3: Discovered 38 additional connections (rounds 2 & 3)
@@ -876,7 +884,7 @@ This skill can work with other Caves skills:
 **Process**:
 1. Content acquisition: Pasted directly
 2. Execution mode: Analyze-and-execute (experienced user)
-3. Perspective: Created new "labor_economics_research"
+3. Perspective: Used perspective-resolver skill → created new "labor economics research"
 4. Phase 1: Extracted 38 connections (academic concepts, studies, theories)
 5. Phase 2: Found 24 related entities, created 15 bridges
 6. Phase 3: Discovered 44 additional connections
@@ -892,7 +900,7 @@ This skill can work with other Caves skills:
 **Process**:
 1. Content acquisition: Read from file, uploaded to IPFS
 2. Execution mode: Analyze-only
-3. Perspective: Created new "medieval_economics"
+3. Perspective: Used perspective-resolver skill → created new "medieval economics"
 4. Phase 1: Extracted 31 connections (historical events, institutions, practices)
 5. Phase 2: Found 8 related entities (many historical terms were novel)
 6. Phase 3: Discovered 35 additional connections (historical parallels)
