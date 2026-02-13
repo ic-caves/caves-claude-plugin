@@ -9,6 +9,7 @@ node_modules/
 
 # Claude Code local settings
 .claude/settings.local.json
+CLAUDE.md
 
 # Editor directories
 .vscode/
