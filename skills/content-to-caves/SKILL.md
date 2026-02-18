@@ -60,8 +60,8 @@ Follow these steps to execute the 4-phase analysis:
 
 2. Validate content length:
    - Minimum: ~500 words (too short won't yield good results)
-   - Maximum: ~50,000 characters (beyond Claude context limit)
    - Sweet spot: 2,000-20,000 words
+   - Large content: > 50,000 characters → use chunked processing (see Step 1b below)
 
 3. Optional IPFS upload:
    - **SKIP this step if content was retrieved from Caves** (via caves__read_ipfs or similar - it's already uploaded!)
@@ -86,6 +86,62 @@ Claude: "I'll analyze this content for your Caves knowledge graph.
 
         [Skip IPFS upload question - content is already uploaded]
 ```
+
+### Step 1b: Large Content Chunking (if content > 50,000 characters)
+
+**Objective**: Split oversized content into processable chunks and run analysis on each piece, then merge results.
+
+**When to trigger**: Content length exceeds ~50,000 characters (roughly 10,000+ words). Announce this to the user before proceeding:
+
+```
+Claude: "This content is [X] characters long — too large to analyze in one pass.
+        I'll split it into [N] chunks and analyze each one separately, then
+        merge the results into a single unified knowledge graph."
+```
+
+**How to split**:
+
+1. **Prefer natural boundaries** (in order of preference):
+   - Section headings (`##`, `---`, numbered sections like `1.`, `Part II`, etc.)
+   - Speaker turns in transcripts (new speaker label = new chunk boundary candidate)
+   - Paragraph breaks (blank lines)
+
+2. **Target chunk size**: 30,000–45,000 characters each
+   - Never cut mid-sentence; extend to the next sentence boundary
+   - Aim for roughly equal chunk sizes, but natural boundaries take priority
+
+3. **Maintain overlap**: Include the last 500 characters of the previous chunk at the start of each new chunk. This prevents concepts that span a boundary from being missed.
+
+**Processing each chunk**:
+
+Run Phases 1–3 (Steps 4–6) on **each chunk independently**. Phase 4 (Cross-Perspective Integration) runs **once** at the end using the merged entity list.
+
+Track chunk progress:
+```
+Processing chunk 1 of 3 (characters 0–42,500)...
+Processing chunk 2 of 3 (characters 42,000–85,200)...
+Processing chunk 3 of 3 (characters 84,700–112,400)...
+```
+
+**Merging results**:
+
+After all chunks are processed:
+
+1. **Deduplicate connections**: If the same `parent ← child` pair appears in multiple chunks, keep it once. Merge their evidence strings (use the most specific/detailed one).
+
+2. **Deduplicate entities**: If an entity appeared in multiple chunks with slightly different names (e.g., "gig economy" vs "gig-economy"), normalize to the most common form.
+
+3. **Merge reinforcement counts**: If a connection was reinforced across chunks, sum the reinforcement counts.
+
+4. **Run Phase 4 once** on the full merged entity list (Step 7).
+
+5. **Present merged results** as if it were a single analysis (Step 8 onwards). Include a note in the summary:
+   ```
+   Note: Content was analyzed in [N] chunks and results merged.
+   Total unique connections after deduplication: [X]
+   ```
+
+**Then continue from Step 2** (Execution Mode Selection) with the merged result set.
 
 ### Step 2: Execution Mode Selection
 
@@ -810,7 +866,7 @@ Top Connections (showing 15 of 127):
 - **Solution**:
   - Inform user of progress at each phase
   - Consider reducing Phase 4 perspectives (limit to top 3)
-  - For very long content, suggest splitting into sections
+  - For very long content (> 50,000 chars), use Step 1b chunked processing
 
 **Problem**: Rate limit errors
 - **Cause**: Too many API calls in short period

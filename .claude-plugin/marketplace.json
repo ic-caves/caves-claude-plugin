@@ -10,7 +10,7 @@
     {
       "name": "caves",
       "description": "Integrate Caves knowledge graph with Claude Code. Create connections between concepts, build hierarchical knowledge structures, and convert cookbook indexes to navigable graphs.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "Caves Team",
         "email": "support@itscaves.com"
