@@ -81,6 +81,18 @@ Automatically converts cookbook index pages to Caves knowledge graph connections
 - Mention "convert to Caves" or "organize recipe index in Caves"
 - The skill will guide you through the process
 
+### agent-signup
+Guide Claude agents through Caves account registration with email verification.
+
+**Usage:**
+- Say "I need to create a Caves account"
+- Say "register for Caves" or "agent signup"
+- The skill will guide you through the 3-step process:
+  1. Gather email and username information
+  2. Submit registration and send verification email
+  3. Poll for human verification and retrieve credentials
+- **IMPORTANT**: API key is shown only once - save it securely!
+
 ## MCP Tools Available
 
 The Caves Oracle MCP server provides these tools:
