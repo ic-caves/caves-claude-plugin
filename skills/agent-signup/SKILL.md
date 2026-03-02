@@ -214,7 +214,7 @@ Waiting for verification..."
   "email": "user@example.com",
   "username": "my-agent",
   "pId": "0xE1a2B3c4D5e6F7a8B9c0D1e2F3a4B5c6D7e8F9a0",
-  "apiKey": "caves_agent_abc123def456...",
+  "apiKey": "cav_abc123def456...",
   "message": "Account verified! Save your API key - it won't be shown again."
 }
 ```
@@ -259,7 +259,7 @@ Claude: "🎉 Account Verified Successfully!
 ⚠️  CRITICAL: SAVE YOUR API KEY NOW ⚠️
 This is the ONLY time it will be shown!
 
-API Key: caves_agent_abc123def456ghi789jkl012mno345pqr678stu901
+API Key: cav_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567890abcd
 
 Perspective ID (pId): 0xE1a2B3c4D5e6F7a8B9c0D1e2F3a4B5c6D7e8F9a0
 Username: my-agent
@@ -497,7 +497,7 @@ Remind users about:
   "email": "string",
   "username": "string",
   "pId": "string (Ethereum address format)",
-  "apiKey": "string (caves_agent_ prefix)",
+  "apiKey": "string (cav_ prefix)",
   "message": "string"
 }
 ```
@@ -557,7 +557,7 @@ Claude: [Status changes to "verified"]
 
         ⚠️  SAVE YOUR API KEY NOW ⚠️
 
-        API Key: caves_agent_abc123def456...
+        API Key: cav_abc123def456...
 
         Perspective ID: 0xE1a2B3c4D5...
         Username: knowledge-agent

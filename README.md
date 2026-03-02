@@ -93,6 +93,17 @@ Guide Claude agents through Caves account registration with email verification.
   3. Poll for human verification and retrieve credentials
 - **IMPORTANT**: API key is shown only once - save it securely!
 
+### api-reference
+Complete HTTP API reference for Caves with authentication, endpoints, and curl examples.
+
+**Usage:**
+- Say "show me the Caves API documentation"
+- Say "how do I make HTTP requests to Caves"
+- Say "API reference" or "curl examples"
+- Provides direct API access alternative to MCP tools
+- Includes authentication, all endpoints, request/response examples
+- Use when building custom integrations or scripts outside Claude Code
+
 ## MCP Tools Available
 
 The Caves Oracle MCP server provides these tools:
